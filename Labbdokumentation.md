@@ -195,7 +195,9 @@ Det befintliga pingresultatet är misslyckat, se avsnitt 2.3. Ett nytt lyckat te
 
 ### 4.1 Projekt och arbetsprocess
 
-Ursprungsrapporten anger att projektet initierades lokalt, kopplades till GitHub och utvecklades med separata commits. Skärmdumpen `Git Repo Historisk.pdf` visar den lokala projektmappen:
+Jag kontrollerade min Git-historik med kommandona `git status` och `git log --oneline` i VS Code. Först upptäckte jag att mappen Downloads inte var ett Git-repository. Därefter hittade jag mitt tidigare projekt `labbmiljo-uppgift` på skrivbordet. Jag öppnade projektet i VS Code, kontrollerade mina tidigare commits och lade till min kompletterade labbdokumentation. Sedan skapade jag en ny commit för att dokumentera ändringarna.
+
+Den tidigare Git-historiken dokumenteras i `Git Repo Historisk.pdf`. Skärmdumpen visar projektets ursprungliga commits och används som underlag för jämförelse med den aktuella Git-historiken.
 
 Dokumenterade grundkommandon:
 
