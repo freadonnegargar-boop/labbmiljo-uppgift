@@ -11,20 +11,50 @@ Syftet är att dokumentera en virtuell labbmiljö med Windows och Ubuntu, nätve
 
 Denna sammanställning följer den individuella uppgiftens fyra delar. Mina tidigare uppladdade PDF rapporter och skärmdumpar används som underlag för genomförande och resultat. Övningsinstruktioner räknas inte som bevis för att jag har utfört ett moment.
 
-### 2. Labbmiljö och nätverk
+## 2. Labbmiljö och nätverk
 
-Enligt och skapades två virtuella maskiner i VirtualBox. Båda placerades på **Internal Network** med namnet **LabNet**. Statiska adresser dokumenterades i subnätet `192.168.1.0/24`.
+Miljön består av två virtuella maskiner i VirtualBox: Ubuntu och WindowsLab. Båda är anslutna till det interna nätverket `intnet` med statiska IP-adresser i subnätet `192.168.1.0/24`. Inställningarna verifierades den 17 oktober 2026.
 
-| VM-namn i underlaget | Hostname i gästens operativsystem | Operativsystem | Dokumenterad statisk IP | Subnätmask | Standard gateway |
+| VM | Hostname | Operativsystem | Intern IP-adress | Subnätmask | Konfigurerad gateway på internt nätverkskort |
 | --- | --- | --- | --- | --- | --- |
-| WindowsLab | Saknar utskrift från `hostname` | Windows 11, exakt version saknas | 192.168.1.50 | 255.255.255.0 (/24) | Ingen enligt rapporten |
-| Ubuntu | `fraidon-VirtualBox` syns i terminalprompt behöver bekräftas med `hostname` | Ubuntu Linux, version och serverutgåva behöver bekräftas | 192.168.1.51 | 255.255.255.0 (/24) | Ingen enligt rapporten |
+| Ubuntu | fraidon-VirtualBox | Ubuntu 26.04.1 LTS | 192.168.1.1 | 255.255.255.0 | Ingen |
+| WindowsLab | Windowslab | Windows 11 | 192.168.1.50 | 255.255.255.0 | 192.168.1.1 |
 
-VM-namnet i VirtualBox behöver inte vara samma som operativsystemets hostname. Skärmdumpen visar Ubuntu med grafiskt skrivbord detta fastställer inte att den installerade utgåvan är Ubuntu Server, vilket behöver kontrolleras mot uppgiftens krav på en Linux-server.
+Ubuntus interna nätverkskort heter `enp0s8` Ubuntu har även ett aktivt bryggat nätverkskort `enp0s3` med standard gateway `192.168.0.1`. Hela Ubuntu-maskinen är därför inte isolerad från det externa nätverket.
 
-För kommunikation inom samma subnät används ingen standard gateway. Underlaget beskriver ett isolerat nät utan router. Internet och externa DNS tester är därför inte bevis för den interna kommunikationen och förutsätter en separat väg ut från miljön. Ett ytterligare nätverkskort kan ändra isoleringen samtliga aktiva adaptrar behöver verifieras.
+Windows har Ubuntu-adressen som gateway men vidarebefordran av trafik genom Ubuntu har inte verifierats. Kommunikation mellan maskinerna inom samma subnät kräver ingen gateway.
 
-### 2.2 Dokumenterad Linux-konfiguration
+Ping lyckades i båda riktningarna. Efter felsökning av Windows brandvägg lyckades även ping från Ubuntu till Windows med brandväggen aktiverad.
+
+Ubuntu har ett grafiskt skrivbord. Operativsystemets version är verifierad, men installation som serverutgåva är ännu inte bekräftad.
+
+### 2.1 Bilder på nätverksinställningarna
+
+Ubuntus statiska IP-adress på det interna nätverket:
+
+![Ubuntu – statisk IP-adress](<Bilder/Ubuntu statisk IP jpg.jpg>)
+
+Windows nätverksinställningar:
+
+![Windows – ipconfig](<Bilder/Windows ip config.jpg>)
+
+### 2.2 Verifiering av operativsystem och hostname
+
+Jag kontrollerade Ubuntus hostname med `hostname` och operativsystemets version med `cat /etc/os-release`. Resultatet visas i bilden nedan.
+
+![Ubuntus operativsystem och hostname](<Bilder/operativsystemets version.jpg>)
+
+#### 2.2.3 Verifiering av nätverksadresser
+
+Den 11 oktober 2026 kontrollerade jag nätverkskonfigurationen i Ubuntu med kommandot `ip -br addr`.
+
+Resultatet visade att nätverkskortet `enp0s3` hade IPv4-adresserna `192.168.50.10/24` och `192.168.0.69/24`, medan `enp0s8` hade adressen `192.168.1.1/24`. Båda nätverkskorten hade status UP.
+
+Den tidigare dokumenterade IP-adressen `192.168.1.51/24` kunde inte bekräftas vid denna kontroll. Resultatet visar därför att den aktuella konfigurationen skiljer sig från den tidigare dokumentationen.
+
+Den 11 oktober 2026 kontrollerade jag min virtuella Ubuntu-maskin i Oracle VirtualBox med kommandona `hostname` och `cat /etc/os-release`.
+
+Resultatet visade att datorns hostname är `fraidon-VirtualBox` och att operativsystemet är Ubuntu 26.04.1 LTS (Resolute Raccoon). Ubuntu körs med ett grafiskt skrivbord. Denna kontroll bekräftar systemets namn och version, men inte att Ubuntu Server-utgåvan är installerad.
 
 Nätverksrapporten anger följande Netplan-konfiguration och `sudo netplan apply`:
 
@@ -46,7 +76,23 @@ Detta återger rapportens konfiguration. Ingen faktisk konfigurationsfil eller u
 Windows-adressen uppges ha konfigurerats manuellt. Den exakta inställningsproceduren och `ipconfig /all`utskriften saknas.
 
 ### 2.3 Observerade nätverkstester
+#### Kompletterande nätverkstest den 17 oktober 2026
 
+Vid de nya testerna lyckades ping i båda riktningarna mellan Ubuntu (192.168.1.1) och Windows (192.168.1.50).
+
+![Ping i båda riktningarna](<Bilder/Ping både riktningar Ubuntu-Windows.jpg>)
+
+När Windows brandvägg aktiverades blockerades ping från Ubuntu. Vid kontroll upptäcktes att brandväggsregeln innehöll den felaktiga källadressen 198.168.1.1. Den korrigerades till 192.168.1.1 med:
+
+    Set-NetFirewallRule -DisplayName "Labb - Ping fran Ubuntu" -RemoteAddress 192.168.1.1
+
+Efter korrigeringen lyckades ping från Ubuntu till Windows med fyra mottagna paket och 0 % paketförlust. Windows brandvägg var aktiverad för Domain, Private och Public.
+
+![Ping efter korrigering och aktiverad brandvägg](<Bilder/Ping brandvagg felsökning.jpg>)
+
+#### Tidigare testresultat
+
+Resultaten nedan visar tidigare tester och beskriver inte nätverkets slutliga tillstånd.
 Följande är avskrivna utdrag ur de befintliga skärmdumparna, inte nya terminalkörningar.
 
 **Windows till Ubuntu – misslyckat test** (`felsöka nätverket labbmiljö..pdf`)
@@ -137,13 +183,21 @@ Detta följer principen om minsta möjliga behörighet: gruppen får endast de r
 ls -la /var/systementor/konsultdata
 ```
 
-**Saknat bevis:** faktisk utskrift som visar gruppen på filen och rättigheterna på både mappen och filen. En lämplig kompletterande kontroll är:
+**Verifierat resultat den 17 oktober 2026:**
 
-```bash
-getent group konsulter
-ls -ld /var/systementor/konsultdata
-ls -la /var/systementor/konsultdata
-```
+Gruppen `konsulter` finns. Mappen och filen ägs av `root` och tillhör gruppen `konsulter`.
+
+- Mappen har behörigheten `drwxr-x---` (750).
+- Filen `anteckningar.txt` har behörigheten `-rw-r-----` (640).
+- Övriga användare saknar åtkomst enligt dessa behörigheter.
+
+Kontrollen gjordes med följande kommandon:
+
+    getent group konsulter
+    ls -ld /var/systementor/konsultdata
+    sudo ls -la /var/systementor/konsultdata
+
+![Verifiering av Linux-behörigheter](<Bilder/Felsökning .jpg>)
 
 **Steg 5 nätverkskontroll:**
 
@@ -167,29 +221,33 @@ New-Item -ItemType Directory -Path "C:\Systementor\KonsultData"
 Get-Acl "C:\Systementor\KonsultData"
 ```
 
-```text
-Directory: C:\Systementor
-Path: KonsultData
-Owner: BUILTIN\Administrators
-Access: BUILTIN\Administrators Allow FullControl...
-```
+**Verifierat resultat den 17 oktober 2026:**
 
-Åtkomstlistan är avkortad i bilden. Det går därför inte att fastställa alla konton, rättigheter eller arv från detta utdrag. En kompletterande läskontroll som visar fullständigare information är:
+Jag inspekterade mappens ägare och åtkomstlista med:
 
-```powershell
-Get-Acl "C:\Systementor\KonsultData" | Format-List Path,Owner,AccessToString
-(Get-Acl "C:\Systementor\KonsultData").Access |
-    Format-Table IdentityReference,FileSystemRights,AccessControlType,IsInherited -AutoSize
-```
+    Get-Acl "C:\Systementor\KonsultData" | Format-List Path,Owner,AccessToString
+
+Ägaren är `BUILTIN\Administrators`. Åtkomstlistan visar bland annat:
+
+| Grupp | Tillåten behörighet |
+| --- | --- |
+| BUILTIN\Administrators | FullControl |
+| NT AUTHORITY\SYSTEM | FullControl |
+| BUILTIN\Users | ReadAndExecute, Synchronize |
+| NT AUTHORITY\Authenticated Users | Modify, Synchronize |
+
+Authenticated Users har även en post som visas numeriskt som `-536805376`. Den behöver tolkas separat och återges därför inte som en namngiven behörighet här.
+
+![Windows – mappens ägare och behörigheter](<Bilder/Windows behörigheterna.jpg>)
 
 **Steg 3 nätverkskontroll**, dokumenterat i rapporten:
 
 ```powershell
-ping 192.168.1.51
+ping 192.168.1.1
 ipconfig /all
 ```
 
-Det befintliga pingresultatet är misslyckat, se avsnitt 2.3. Ett nytt lyckat test mot Ubuntu samt faktisk `ipconfig /all`-utskrift behöver läggas till.
+Vid det kompletterande testet lyckades ping från Windows till Ubuntu på 192.168.1.1, se avsnitt 2.3. Utskriften från `ipconfig /all` visas i avsnitt 2.1.
 
 ## 4. Git och versionshantering
 
