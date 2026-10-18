@@ -123,6 +123,33 @@ Windows brandvägg stängdes tillfälligt av under den tidigare felsökningen. V
 
 Rapportens uppgift att borttagning av gateway gjorde nätverket identifierat saknar resultatbild. Att ett isolerat nät saknar gateway innebär inte i sig att Windows måste ändra etiketten `Unidentified Network`.
 
+### 2.5 Ubuntu som SSH-server
+
+Den 18 oktober 2026 startade jag SSH-tjänsten på Ubuntu:
+
+```bash
+sudo systemctl start ssh
+systemctl status ssh --no-pager
+```
+
+Tjänsten visade `active (running)`. Från PowerShell i WindowsLab anslöt jag med:
+
+```powershell
+ssh fraidon@192.168.1.1
+```
+
+Jag jämförde serverns fingeravtryck med resultatet av följande kommando i Ubuntu innan jag godkände anslutningen:
+
+```bash
+ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub
+```
+
+Fingeravtrycken stämde överens. Jag loggade in med Ubuntu-användarens lösenord och körde `hostname` och `whoami` via SSH. Resultaten var `fraidon-VirtualBox` och `fraidon`.
+
+Testet visar att Ubuntu fungerar som SSH-server och kan administreras från WindowsLab.
+
+![SSH från WindowsLab till Ubuntu](Bilder/SSH-Windows-Ubuntu.jpg)
+
 ## 3. Kommandoradsgenomförande
 
 ### 3.1 Linux Bash
